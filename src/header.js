@@ -1,4 +1,5 @@
 import {onProjectChange} from "./index.js";
+import Proyect from "./Proyect";
 
 function createHeader(proyects, actualProyect) {
     // Create the header element
@@ -28,6 +29,18 @@ function createHeader(proyects, actualProyect) {
     });
 
     projectDropdown.appendChild(projectSelect);
+    
+
+
+    // Create the "Create Project" button
+    const newProjectButton = document.createElement('button');
+    newProjectButton.textContent = 'New Project';
+    newProjectButton.className = 'new-project-button';
+    newProjectButton.addEventListener('click', () => {
+        handleNewProject(proyects);
+    });
+
+    projectDropdown.appendChild(newProjectButton);
     headerContainer.appendChild(projectDropdown);
 
     // Create the app title
@@ -53,6 +66,70 @@ function createHeader(proyects, actualProyect) {
     return header;
 }
 
+function handleNewProject(allProyects){
+    createProjectModal(allProyects);
+    //let newProyect = new Proyect();
+}
+
+function createProjectModal(allProyects) {
+    // Create the modal background
+    const modalBackground = document.createElement('div');
+    modalBackground.className = 'modal-background';
+
+    // Create the modal container
+    const modalContainer = document.createElement('div');
+    modalContainer.className = 'modal-container';
+
+    // Create the close button ("X")
+    const closeButton = document.createElement('button');
+    closeButton.className = 'close-button';
+    closeButton.textContent = 'X';
+    modalContainer.appendChild(closeButton);
+
+    // Create the input field for the project title
+    const projectInput = document.createElement('input');
+    projectInput.type = 'text';
+    projectInput.placeholder = 'Enter project title';
+    modalContainer.appendChild(projectInput);
+
+    // Create the submit button
+    const submitButton = document.createElement('button');
+    submitButton.textContent = 'Create Project';
+    modalContainer.appendChild(submitButton);
+
+    // Append the modal container to the background
+    modalBackground.appendChild(modalContainer);
+
+    // Append the modal background to the document body
+    document.body.appendChild(modalBackground);
+
+    // Event listener for the submit button
+    submitButton.addEventListener('click', () => {
+        const title = projectInput.value.trim();
+        if (title) {
+            createProject(title, allProyects);
+            document.body.removeChild(modalBackground); // Remove the modal from the DOM
+        }
+    });
+
+    // Event listener for the close button
+    closeButton.addEventListener('click', () => {
+        document.body.removeChild(modalBackground); // Remove the modal from the DOM
+    });
+}
+
+function createProject(title, allProyects) {
+    let newProyect = new Proyect(title);
+    allProyects.push(newProyect);
+    onProjectChange(newProyect);
+    const existingHeader = document.querySelector('header');
+    if(existingHeader){
+        existingHeader.remove();
+        let newHeader = createHeader(allProyects, newProyect);
+        document.body.prepend(newHeader);
+    }
+    
+}
 
 
 export { createHeader };

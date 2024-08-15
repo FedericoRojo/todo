@@ -23,15 +23,17 @@ let allProyects = [Proyect1, Proyect2, Proyect3];
 
 const taskContainer = createTaskContainer(Proyect2);
 document.body.appendChild(createHeader(allProyects, Proyect2));
-let firstPrintedTaskContainer = document.body.appendChild(taskContainer);
+document.body.appendChild(taskContainer);
 
 function onProjectChange(selectedProject) {
     const existingTaskContainer = document.querySelector('header + .task-container');
     if (existingTaskContainer) {
         existingTaskContainer.remove();
+        let taskContainer = createTaskContainer(selectedProject);
+        document.body.appendChild(taskContainer);
     }
-    let taskContainer = createTaskContainer(selectedProject);
-    document.body.appendChild(taskContainer);
 };
+
+
 
 export {onProjectChange};
