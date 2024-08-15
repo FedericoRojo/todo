@@ -1,6 +1,7 @@
 import {onProjectChange} from "./index.js";
 import Proyect from "./Proyect";
 
+
 function createHeader(proyects, actualProyect) {
     // Create the header element
     const header = document.createElement('header');
@@ -13,24 +14,46 @@ function createHeader(proyects, actualProyect) {
     const projectDropdown = document.createElement('div');
     projectDropdown.className = 'project-dropdown';
 
-    // Option to choose from available projects
-    const projectSelect = document.createElement('select');
-    projectSelect.className = 'task-select';
+    // Create the dropdown button
+    const dropdownButton = document.createElement('button');
+    dropdownButton.textContent = actualProyect.title;
+    dropdownButton.className = 'dropdown-button';
+    projectDropdown.appendChild(dropdownButton);
+
+    // Create the dropdown menu
+    const dropdownMenu = document.createElement('div');
+    dropdownMenu.className = 'dropdown-menu';
+    projectDropdown.appendChild(dropdownMenu);
 
     // Populate the dropdown with project options
     proyects.forEach(proyect => {
-        const option = document.createElement('option');
-        option.value = proyect.title; // Use the project title as the value
-        option.textContent = proyect.title; // Display the project title
-        if (proyect.title === actualProyect.title) {
-            option.selected = true; // Set the default selected option
-        }
-        projectSelect.appendChild(option);
+        const dropdownItem = document.createElement('div');
+        dropdownItem.className = 'dropdown-item';
+
+        const projectLabel = document.createElement('span');
+        projectLabel.textContent = proyect.title;
+        dropdownItem.appendChild(projectLabel);
+
+        // Create the remove button
+        const removeButton = document.createElement('button');
+        removeButton.textContent = 'x';
+        removeButton.className = 'remove-button';
+        removeButton.addEventListener('click', () => {
+            handleRemoveProject(proyects, proyect);
+        });
+        dropdownItem.appendChild(removeButton);
+
+        // Add event listener to handle project selection
+        dropdownItem.addEventListener('click', () => {
+            if (proyect !== actualProyect) {
+                onProjectChange(proyect);
+                actualProyect = proyect;
+                dropdownButton.textContent = proyect.title; // Update the button text
+            }
+        });
+
+        dropdownMenu.appendChild(dropdownItem);
     });
-
-    projectDropdown.appendChild(projectSelect);
-    
-
 
     // Create the "Create Project" button
     const newProjectButton = document.createElement('button');
@@ -39,8 +62,8 @@ function createHeader(proyects, actualProyect) {
     newProjectButton.addEventListener('click', () => {
         handleNewProject(proyects);
     });
-
     projectDropdown.appendChild(newProjectButton);
+
     headerContainer.appendChild(projectDropdown);
 
     // Create the app title
@@ -52,26 +75,10 @@ function createHeader(proyects, actualProyect) {
     // Append the header container to the header element
     header.appendChild(headerContainer);
 
-    // Add event listener for project selection changes
-    projectSelect.addEventListener('change', (event) => {
-        const selectedProjectTitle = event.target.value;
-        const selectedProject = proyects.find(proyect => proyect.title === selectedProjectTitle);
-        if (selectedProject != actualProyect) {
-            onProjectChange(selectedProject);
-            actualProyect = selectedProject;
-            selectedProject.textContent = selectedProject.title;
-        } 
-    }); 
-
     return header;
-}
+}   
 
-function handleNewProject(allProyects){
-    createProjectModal(allProyects);
-    //let newProyect = new Proyect();
-}
-
-function createProjectModal(allProyects) {
+function handleNewProject(allProyects) {
     // Create the modal background
     const modalBackground = document.createElement('div');
     modalBackground.className = 'modal-background';
@@ -121,31 +128,88 @@ function createProjectModal(allProyects) {
 function createProject(title, allProyects) {
     let newProyect = new Proyect(title);
     allProyects.push(newProyect);
-    onProjectChange(newProyect);
     const existingHeader = document.querySelector('header');
     if(existingHeader){
         existingHeader.remove();
         let newHeader = createHeader(allProyects, newProyect);
         document.body.prepend(newHeader);
     }
+    onProjectChange(newProyect);
+}
+
+function actualizeHeader(header, proyects){
+    let actualProyect = proyects[0];
+    // Create the project dropdown div
+    const projectDropdown = document.createElement('div');
+    projectDropdown.className = 'project-dropdown';
+
+    // Create the dropdown button
+    const dropdownButton = document.createElement('button');
+    dropdownButton.textContent = actualProyect.title;
+    dropdownButton.className = 'dropdown-button';
+    projectDropdown.appendChild(dropdownButton);
+
+    // Create the dropdown menu
+    const dropdownMenu = document.createElement('div');
+    dropdownMenu.className = 'dropdown-menu';
+    projectDropdown.appendChild(dropdownMenu);
+
+    // Populate the dropdown with project options
+    if(proyects.length != 0){
+        proyects.forEach(proyect => {
+            const dropdownItem = document.createElement('div');
+            dropdownItem.className = 'dropdown-item';
     
+            const projectLabel = document.createElement('span');
+            projectLabel.textContent = proyect.title;
+            dropdownItem.appendChild(projectLabel);
+    
+            // Create the remove button
+            const removeButton = document.createElement('button');
+            removeButton.textContent = 'x';
+            removeButton.className = 'remove-button';
+            removeButton.addEventListener('click', () => {
+                handleRemoveProject(proyects, proyect);
+            });
+            dropdownItem.appendChild(removeButton);
+    
+            // Add event listener to handle project selection
+            dropdownItem.addEventListener('click', () => {
+                if (proyect !== actualProyect) {
+                    onProjectChange(proyect);
+                    actualProyect = proyect;
+                    dropdownButton.textContent = proyect.title; // Update the button text
+                }
+            });
+    
+            dropdownMenu.appendChild(dropdownItem);
+        });
+    }
+    
+
+     // Create the "Create Project" button
+     const newProjectButton = document.createElement('button');
+     newProjectButton.textContent = 'New Project';
+     newProjectButton.className = 'new-project-button';
+     newProjectButton.addEventListener('click', () => {
+         handleNewProject(proyects);
+     });
+     projectDropdown.appendChild(newProjectButton);
+
+    const existingDropdown = header.querySelector('.project-dropdown');
+    if (existingDropdown) {
+        existingDropdown.remove();
+    }
+
+    header.querySelector('.header-container').insertBefore(projectDropdown, header.querySelector('h1'));
+}
+
+function handleRemoveProject(allProyects, projectToRemove){
+    let newAllProyects = allProyects.filter(project => project != projectToRemove);
+    const existingHeader = document.querySelector('header');
+    actualizeHeader(existingHeader, newAllProyects);
 }
 
 
 export { createHeader };
 
-
-/*
-<header>
-        <div class="header-container">
-            <div class="project-selection">
-                <div class="selected-project">
-                    Proyecto
-                </div>
-                <div class="project-dropdown">
-                </div>
-            </div>
-            <h1 class="app-title">TO-DO</h1>
-        </div>
-</header>
-*/
