@@ -1,5 +1,6 @@
 import Task from "./task";
-import {onProjectChange} from "./index.js";
+import {onProjectChange, savedProjects, saveProjects} from "./index.js";
+import {format, formatDate} from "date-fns"
 
 let taskButtonClicked = false;
 
@@ -35,7 +36,10 @@ function createTaskCard(task) {
     editOption.addEventListener('click', () => {
         handleTaskModify(task, taskCard);
     });
-
+    
+    // Create the date tag
+    const dateTag = document.createElement('div');
+    dateTag.textContent = format(task.date, 'dd/MM/yyyy');
 
     const priorityOption = document.createElement('div');
     priorityOption.textContent = task.prior;
@@ -44,6 +48,7 @@ function createTaskCard(task) {
     taskCardOptions.appendChild(deleteOption);
     taskCardOptions.appendChild(editOption);
     taskCardOptions.appendChild(priorityOption);
+    taskCardOptions.appendChild(dateTag);
 
     // Append taskCardText and taskCardOptions to taskCard
     taskCard.appendChild(taskCardText);
@@ -53,46 +58,49 @@ function createTaskCard(task) {
 }
 
 function createTaskContainer(proyect) {
-    let tasks = proyect.taskList;
-    // Create the main task container
-    const taskContainer = document.createElement('div');
-    taskContainer.className = 'task-container';
-
-    const emptyDiv1 = document.createElement('div');
-    const emptyDiv2 = document.createElement('div');
-    // Create the inner container
-    const innerContainer = document.createElement('div');
-
-    // Create the new task button
-    const newTaskButton = document.createElement('div');
-    newTaskButton.className = 'new-task-button';
-    newTaskButton.textContent = 'New Task';
-    newTaskButton.addEventListener('click', () => {
-        if( taskButtonClicked == false ){
-            taskButtonClicked = true;
-            const taskCard = createEditableTaskCard(proyect);
-            newTaskButton.parentNode.insertBefore(taskCard, newTaskButton.nextSibling);
-        }
-    });
-
-    // Append the new task button to the inner container
-    innerContainer.appendChild(newTaskButton);
-
-    // Create and add each task card to the inner container
-    if(tasks.length != 0){
-        tasks.forEach(task => {
-            const taskCard = createTaskCard(task);
-            innerContainer.appendChild(taskCard);
+    let taskContainer;
+    if(proyect != null){
+        let tasks = proyect.taskList;
+        // Create the main task container
+        taskContainer = document.createElement('div');
+        taskContainer.className = 'task-container';
+    
+        const emptyDiv1 = document.createElement('div');
+        const emptyDiv2 = document.createElement('div');
+        // Create the inner container
+        const innerContainer = document.createElement('div');
+    
+        // Create the new task button
+        const newTaskButton = document.createElement('div');
+        newTaskButton.className = 'new-task-button';
+        newTaskButton.textContent = 'New Task';
+        newTaskButton.addEventListener('click', () => {
+            if( taskButtonClicked == false ){
+                taskButtonClicked = true;
+                const taskCard = createEditableTaskCard(proyect);
+                newTaskButton.parentNode.insertBefore(taskCard, newTaskButton.nextSibling);
+            }
         });
-    }
     
-
-    // Append the inner container to the task container
-    taskContainer.appendChild(emptyDiv1);
-    taskContainer.appendChild(innerContainer);
-    taskContainer.appendChild(emptyDiv2);
+        // Append the new task button to the inner container
+        innerContainer.appendChild(newTaskButton);
     
-    return taskContainer;
+        // Create and add each task card to the inner container
+        if(tasks.length != 0){
+            tasks.forEach(task => {
+                const taskCard = createTaskCard(task);
+                innerContainer.appendChild(taskCard);
+            });
+        }
+        
+    
+        // Append the inner container to the task container
+        taskContainer.appendChild(emptyDiv1);
+        taskContainer.appendChild(innerContainer);
+        taskContainer.appendChild(emptyDiv2);
+        
+        return taskContainer;
+    } 
 }
 
 function createEditableTaskCard(proyect) {
@@ -126,6 +134,20 @@ function createEditableTaskCard(proyect) {
 
     const taskCardOptions = document.createElement('div');
     taskCardOptions.className = 'task-card-options';
+
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.id = 'myDateInput';
+    dateInput.className = "custom-date-input";
+
+    // Add an event listener to handle the selected date
+    let selectedDate;
+    dateInput.addEventListener('change', () => {
+        const dateString = dateInput.value;
+        const [year, month, day] = dateString.split('-');
+        selectedDate = new Date(year, month - 1, day, 12, 0, 0);
+    });
+
      // Option to choose priority
      const prioritySelect = document.createElement('select');
      prioritySelect.className = "task-select";
@@ -137,6 +159,7 @@ function createEditableTaskCard(proyect) {
          prioritySelect.appendChild(option);
      });
  
+     taskCardOptions.appendChild(dateInput);
      taskCardOptions.appendChild(prioritySelect);
 
  
@@ -144,7 +167,7 @@ function createEditableTaskCard(proyect) {
      const saveButton = document.createElement('div');
      saveButton.textContent = 'Save';
      saveButton.addEventListener('click', () => {
-        handleTaskCreated(titleInput.value, descriptionInput.value, Date.now(), 
+        handleTaskCreated(titleInput.value, descriptionInput.value, selectedDate, 
                           proyect, prioritySelect.value, proyect);
         taskCard.remove();
      });
@@ -162,7 +185,6 @@ function createEditableTaskCard(proyect) {
     // Append task card text and options to the task card container
     taskCard.appendChild(taskCardText);
     taskCard.appendChild(taskCardOptions);
-
     
     return taskCard;
 }
@@ -239,6 +261,7 @@ function createModifyTaskCard(task, oldTaskCard) {
 function handleTaskCreated(title, value, date, project, prior, actualProyect){
     const createdTask = new Task(title, value, date, project, prior);
     actualProyect.addTask(createdTask);
+    saveProjects();
     taskButtonClicked = false;
     onProjectChange(actualProyect);
 }
@@ -250,6 +273,7 @@ function handleTaskModify(task, taskCard){
 
 function handleTaskModifyFinished(title, description, date, prior, task, oldTaskCard){
     task.modify(title, description, null, task.project, prior);
+    saveProjects();
     let newTaskCard = createTaskCard(task);
     oldTaskCard.parentNode.replaceChild(newTaskCard, oldTaskCard);
 }
@@ -261,30 +285,10 @@ function handleCancelModify(newTaskCard, oldTaskCard){
 function handleDelete(task, taskCard){
     task.proyect.removeTask(task);
     taskCard.remove(); 
+    saveProjects();
 }
 
 export {createTaskCard, createTaskContainer};
 
 
-/*
-<div class="task-container">
-        <div></div>
-        <div>
-            <div class="new-task-button">New Task</div>
-            <div class="task-card">
-                <div class="task-card-text">
-                    <h3>Title</h3>
-                    <div>Description Lorem ipsum, dolor sit amet consectetur adipisicing elit. Sed aut incidunt 
-                        veritatis tempora error. Totam labore consequuntur fugit tenetur beatae minus delectus omnis, dolorem
-                        asperiores nulla dicta fuga quae ipsum.</div>
-                </div>
-                <div class="task-card-options">
-                    <div>Borrar</div>
-                    <div>Editar</div>
-                    <div>Prioridad</div>
-                </div>
-            </div>
-        </div>
-        <div></div>
-</div>
-*/
+

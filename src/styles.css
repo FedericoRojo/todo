@@ -31,7 +31,7 @@ body {
 }
 
 .new-project-button{
-    padding: 5px 10px;
+    padding: 10px 10px;
     margin-left: 8px;
     background-color: #28a745;
     color: white;
@@ -247,4 +247,26 @@ body {
 .dropdown-button:hover + .dropdown-menu,
 .dropdown-menu:hover {
     display: block;
+}
+
+.custom-date-input {
+    width: 200px;
+    padding: 10px;
+    border: 2px solid #007bff;
+    border-radius: 5px;
+    font-size: 16px;
+    color: #007bff;
+    background-color: #fff;
+  }
+
+.calendar-container {
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh; /* Limit the height to allow scrolling */
+    overflow-y: scroll;
+}
+
+.day {
+    padding: 20px;
+    border-bottom: 1px solid #ddd;
 }

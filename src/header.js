@@ -1,8 +1,8 @@
-import {onProjectChange} from "./index.js";
+import {onProjectChange, onCalendarChange, savedProjects, saveProjects, loadProjects} from "./index.js";
 import Proyect from "./Proyect";
+import {createCalendar} from "./calendarPage.js"
 
-
-function createHeader(proyects, actualProyect) {
+function createHeader(actualProyect) {
     // Create the header element
     const header = document.createElement('header');
 
@@ -14,55 +14,77 @@ function createHeader(proyects, actualProyect) {
     const projectDropdown = document.createElement('div');
     projectDropdown.className = 'project-dropdown';
 
-    // Create the dropdown button
     const dropdownButton = document.createElement('button');
-    dropdownButton.textContent = actualProyect.title;
     dropdownButton.className = 'dropdown-button';
     projectDropdown.appendChild(dropdownButton);
-
+    // Create the dropdown button
+    if(actualProyect != null){
+        dropdownButton.textContent = actualProyect.title;    
+    }else{
+        dropdownButton.textContent = "Calendar";
+        onCalendarChange();
+    }
+   
     // Create the dropdown menu
     const dropdownMenu = document.createElement('div');
     dropdownMenu.className = 'dropdown-menu';
     projectDropdown.appendChild(dropdownMenu);
 
+    const dropdownItem = document.createElement('div');
+    dropdownItem.className = 'dropdown-item';
+
+    const projectLabel = document.createElement('span');
+    projectLabel.textContent = "Calendar";
+    dropdownItem.appendChild(projectLabel);
+
+    dropdownItem.addEventListener('click', () => {
+        onCalendarChange();
+        actualProyect = 'Calendar';
+        dropdownButton.textContent = 'Calendar'; // Update the button text
+    });
+
+    dropdownMenu.appendChild(dropdownItem);
+
     // Populate the dropdown with project options
-    proyects.forEach(proyect => {
-        const dropdownItem = document.createElement('div');
-        dropdownItem.className = 'dropdown-item';
-
-        const projectLabel = document.createElement('span');
-        projectLabel.textContent = proyect.title;
-        dropdownItem.appendChild(projectLabel);
-
-        // Create the remove button
-        const removeButton = document.createElement('button');
-        removeButton.textContent = 'x';
-        removeButton.className = 'remove-button';
-        removeButton.addEventListener('click', () => {
-            handleRemoveProject(proyects, proyect);
-        });
-        dropdownItem.appendChild(removeButton);
-
-        // Add event listener to handle project selection
-        dropdownItem.addEventListener('click', () => {
-            if (proyect !== actualProyect) {
+    if(savedProjects.length != 0){
+        savedProjects.forEach(proyect => {
+            const dropdownItem = document.createElement('div');
+            dropdownItem.className = 'dropdown-item';
+    
+            const projectLabel = document.createElement('span');
+            projectLabel.textContent = proyect.title;
+            dropdownItem.appendChild(projectLabel);
+    
+            // Create the remove button
+            const removeButton = document.createElement('button');
+            removeButton.textContent = 'x';
+            removeButton.className = 'remove-button';
+            removeButton.addEventListener('click', () => {
+                handleRemoveProject(proyect);
+            });
+            dropdownItem.appendChild(removeButton);
+    
+            // Add event listener to handle project selection
+            dropdownItem.addEventListener('click', () => {
                 onProjectChange(proyect);
                 actualProyect = proyect;
                 dropdownButton.textContent = proyect.title; // Update the button text
-            }
+            });
+    
+            dropdownMenu.appendChild(dropdownItem);
         });
-
-        dropdownMenu.appendChild(dropdownItem);
-    });
+    }
+    
 
     // Create the "Create Project" button
     const newProjectButton = document.createElement('button');
     newProjectButton.textContent = 'New Project';
     newProjectButton.className = 'new-project-button';
     newProjectButton.addEventListener('click', () => {
-        handleNewProject(proyects);
+        handleNewProject();
     });
     projectDropdown.appendChild(newProjectButton);
+
 
     headerContainer.appendChild(projectDropdown);
 
@@ -72,13 +94,17 @@ function createHeader(proyects, actualProyect) {
     appTitle.textContent = 'TO-DO';
     headerContainer.appendChild(appTitle);
 
+    
+
+
     // Append the header container to the header element
     header.appendChild(headerContainer);
 
     return header;
 }   
 
-function handleNewProject(allProyects) {
+
+function handleNewProject() {
     // Create the modal background
     const modalBackground = document.createElement('div');
     modalBackground.className = 'modal-background';
@@ -114,7 +140,7 @@ function handleNewProject(allProyects) {
     submitButton.addEventListener('click', () => {
         const title = projectInput.value.trim();
         if (title) {
-            createProject(title, allProyects);
+            createProject(title);
             document.body.removeChild(modalBackground); // Remove the modal from the DOM
         }
     });
@@ -125,20 +151,22 @@ function handleNewProject(allProyects) {
     });
 }
 
-function createProject(title, allProyects) {
+function createProject(title) {
     let newProyect = new Proyect(title);
-    allProyects.push(newProyect);
+    savedProjects.push(newProyect);
+    saveProjects();
     const existingHeader = document.querySelector('header');
     if(existingHeader){
         existingHeader.remove();
-        let newHeader = createHeader(allProyects, newProyect);
+        let newHeader = createHeader(newProyect);
         document.body.prepend(newHeader);
     }
     onProjectChange(newProyect);
 }
 
-function actualizeHeader(header, proyects){
-    let actualProyect = proyects[0];
+function actualiceHeader(header){
+    let actualProyect = savedProjects[0];
+    
     // Create the project dropdown div
     const projectDropdown = document.createElement('div');
     projectDropdown.className = 'project-dropdown';
@@ -155,8 +183,8 @@ function actualizeHeader(header, proyects){
     projectDropdown.appendChild(dropdownMenu);
 
     // Populate the dropdown with project options
-    if(proyects.length != 0){
-        proyects.forEach(proyect => {
+    if(savedProjects.length != 0){
+        savedProjects.forEach(proyect => {
             const dropdownItem = document.createElement('div');
             dropdownItem.className = 'dropdown-item';
     
@@ -169,7 +197,7 @@ function actualizeHeader(header, proyects){
             removeButton.textContent = 'x';
             removeButton.className = 'remove-button';
             removeButton.addEventListener('click', () => {
-                handleRemoveProject(proyects, proyect);
+                handleRemoveProject(proyect);
             });
             dropdownItem.appendChild(removeButton);
     
@@ -192,7 +220,7 @@ function actualizeHeader(header, proyects){
      newProjectButton.textContent = 'New Project';
      newProjectButton.className = 'new-project-button';
      newProjectButton.addEventListener('click', () => {
-         handleNewProject(proyects);
+         handleNewProject();
      });
      projectDropdown.appendChild(newProjectButton);
 
@@ -204,10 +232,16 @@ function actualizeHeader(header, proyects){
     header.querySelector('.header-container').insertBefore(projectDropdown, header.querySelector('h1'));
 }
 
-function handleRemoveProject(allProyects, projectToRemove){
-    let newAllProyects = allProyects.filter(project => project != projectToRemove);
+function handleRemoveProject(projectToRemove){
+    savedProjects.filter(project => project != projectToRemove);
+    saveProjects();
     const existingHeader = document.querySelector('header');
-    actualizeHeader(existingHeader, newAllProyects);
+    if(savedProjects.length != 0){
+        actualiceHeader(existingHeader);
+    }else{
+        createCalendar();
+    }
+    
 }
 
 

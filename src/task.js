@@ -1,5 +1,8 @@
 class Task {
     constructor(title, description, date, proyect, prior){
+        if( title == null || date == null ){
+            throw new Error("Title or date are not completed");
+        }
         this.title = title;
         this. description = description;
         this.date = date;
